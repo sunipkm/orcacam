@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.f": "FortranFixedForm",
+        "orcacam.h": "c",
+        "dcamapi4.h": "c"
+    },
+    "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools"
+}
