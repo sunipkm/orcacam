@@ -12,6 +12,7 @@
 #ifndef _ORCACAM_H_
 #define _ORCACAM_H_
 
+#include <assert.h>
 #include <string.h> // memset
 
 #include "dcamapi/dcamapi4.h"
@@ -47,6 +48,29 @@ typedef struct _ORCA_CAM_INFO
     char dcam_ver[64]; /*<! DCAM API version */
 } ORCA_CAM_INFO;
 
+/**
+ * @brief ORCA Image Frame
+ *
+ */
+typedef struct _ORCA_FRAME
+{
+    char *data;         //!< Frame data
+    int32 width;        //!< Frame width
+    int32 height;       //!< Frame height
+    DCAM_PIXELTYPE fmt; //!< Frame pixel format
+    int32 row_stride;   //!< Frame row stride (bytes)
+} ORCA_FRAME;
+
+typedef void (*OrcaFrameCallback)(ORCA_FRAME *, void *, size_t);
+
+/**
+ * @brief Default number of frames
+ *
+ */
+#define DEFAULT_FRAME_COUNT 10
+
+typedef struct _ORCACAM *ORCACAM;
+
 #define ORCA_PTR_INIT(type, name)                                              \
     type name;                                                                 \
     {                                                                          \
@@ -58,8 +82,7 @@ typedef struct _ORCA_CAM_INFO
     type name;                                                                 \
     {                                                                          \
         memset(&name, 0, sizeof(type));                                        \
-        name.size     = sizeof(type);                                          \
-        name.sub.size = sizeof(type);                                          \
+        name.sub = sizeof(type);                                               \
     }
 
 /**
@@ -80,7 +103,7 @@ DCAMERR orca_list_devices(int32 *_Nonnull count, int32 sz_initopt,
  * @param hdcam Output HDCAM handle
  * @return DCAMERR
  */
-DCAMERR orca_open_device(int32 index, HDCAM *_Nonnull hdcam);
+DCAMERR orca_open_camera(int32 index, ORCACAM *_Nonnull cam, size_t num_frames);
 
 /**
  * @brief Obtain device information
@@ -89,56 +112,63 @@ DCAMERR orca_open_device(int32 index, HDCAM *_Nonnull hdcam);
  * @param info Output ORCA_CAM_INFO
  * @return DCAMERR
  */
-DCAMERR orca_device_info(HDCAM cam, ORCA_CAM_INFO *_Nonnull info);
+DCAMERR orca_device_info(ORCACAM cam, ORCA_CAM_INFO *info);
 
-DCAMERR orca_realloc_framebuffer(HDCAM cam, int32 num_frames);
+DCAMERR orca_realloc_framebuffer(ORCACAM cam, size_t num_frames);
 
-DCAMERR orca_get_frame_size();
+DCAMERR orca_get_frame_size(ORCACAM cam, int32 *width, int32 *height);
 
-DCAMERR orca_start_capture(handle, cb, user_data, sz_user_data);
+DCAMERR orca_get_mode(ORCACAM cam, DCAMPROPMODEVALUE *mode);
 
-DCAMERR orca_stop_capture(handle);
+DCAMERR orca_switch_mode(ORCACAM cam, DCAMPROPMODEVALUE mode);
 
-DCAMERR orca_close_camera(handle);
+DCAMERR orca_start_capture(ORCACAM cam, OrcaFrameCallback cb, void *user_data, size_t sz_user_data);
 
-DCAMERR orca_get_temperature(handle, double *temp);
+DCAMERR orca_stop_capture(ORCACAM cam);
 
-DCAMERR orca_set_temperature(handle, double temp);
+DCAMERR orca_close_camera(ORCACAM *cam);
 
-DCAMERR orca_get_sensor_size(handle, int32 *width, int32 *height);
+DCAMERR orca_get_temperature(ORCACAM cam, double *temp);
 
-DCAMERR orca_get_exposure(handle, double *exposure);
+DCAMERR orca_set_temperature(ORCACAM cam, double temp);
 
-DCAMERR orca_set_exposure(handle, double exposure);
+DCAMERR orca_get_sensor_size(ORCACAM cam, int32 *width, int32 *height);
 
-DCAMERR orca_get_pixel_fmt(void handle, DCAM_PIXELTYPE *_Nonnull fmt);
+DCAMERR orca_get_exposure(ORCACAM cam, double *exposure);
 
-DCAMERR orca_set_pixel_fmt(void handle, DCAM_PIXELTYPE fmt);
+DCAMERR orca_set_exposure(ORCACAM cam, double exposure);
 
-DCAMERR orca_get_roi(void handle, int32 *x, int32 *y, int32 *w, int32 *h);
+DCAMERR orca_get_pixel_fmt(ORCACAM cam, DCAM_PIXELTYPE *fmt);
 
-DCAMERR orca_set_roi(void handle, int32 x, int32 y, int32 w, int32 h);
+DCAMERR orca_set_pixel_fmt(ORCACAM cam, DCAM_PIXELTYPE fmt);
 
-DCAMERR orca_get_acq_framerate(void handle, double *_Nonnull fps);
+DCAMERR orca_get_roi(ORCACAM cam, int32 *x, int32 *y, int32 *w, int32 *h);
 
-DCAMERR orca_set_acq_framerate(void handle, double fps);
+DCAMERR orca_set_roi(ORCACAM cam, int32 x, int32 y, int32 w, int32 h);
 
-DCAMERR orca_get_attr(void handle, DCAMIDPROP prop, DCAMPROP_ATTR *_Nonnull attr);
+DCAMERR orca_get_acq_framerate(ORCACAM cam, double *fps);
 
-DCAMERR orca_get_value(void handle, DCAMIDPROP prop, double *_Nonnull value);
+DCAMERR orca_set_acq_framerate(ORCACAM cam, double fps);
 
-DCAMERR orca_set_value(void handle, DCAMIDPROP prop, double value);
+DCAMERR orca_get_attr(ORCACAM cam, DCAMIDPROP prop, DCAMPROP_ATTR *attr);
 
-DCAMERR orca_setget_value(void handle, DCAMIDPROP prop, double *_Nonnull value, int32 option DCAM_DEFAULT_ARG);
+DCAMERR orca_get_value(ORCACAM cam, DCAMIDPROP prop, double *value);
 
-DCAMERR orca_query_value(void handle, DCAMIDPROP prop, double *_Nonnull value, int32 option DCAM_DEFAULT_ARG);
+DCAMERR orca_set_value(ORCACAM cam, DCAMIDPROP prop, double value);
 
-DCAMERR orca_get_next_id(void handle, int32 *_Nonnull prop, int32 option DCAM_DEFAULT_ARG);
+DCAMERR orca_setget_value(ORCACAM cam, DCAMIDPROP prop, double *value,
+                          int32 option DCAM_DEFAULT_ARG);
 
-DCAMERR orca_get_name(void handle, int32 prop, char *_Nonnull text, int32 textbytes);
+DCAMERR orca_query_value(ORCACAM cam, DCAMIDPROP prop, double *value,
+                         int32 option DCAM_DEFAULT_ARG);
 
-DCAMERR orca_get_value_text(void handle, DCAMIDPROP prop, double value, char *_Nonnull text, int32 textbytes);
+DCAMERR orca_get_next_id(ORCACAM cam, int32 *prop,
+                         int32 option DCAM_DEFAULT_ARG);
 
+DCAMERR orca_get_name(ORCACAM cam, int32 prop, char *text, int32 textbytes);
+
+DCAMERR orca_get_value_text(ORCACAM cam, DCAMIDPROP prop, double value,
+                            char *text, int32 textbytes);
 
 #ifdef __cplusplus
 // TODO: extern C
