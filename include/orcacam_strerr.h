@@ -14,9 +14,8 @@
 #include "dcamapi/dcamapi4.h"
 
 #ifdef __cplusplus
-// TODO: extern C
-// extern "C"
-// {
+extern "C"
+{
 #endif // __cplusplus
 
 /**
@@ -205,8 +204,7 @@ static inline const char *orcacam_sterr(DCAMERR err)
 #pragma GCC diagnostic pop
 
 #ifdef __cplusplus
-// TODO: extern C
-// }
+}
 #endif // __cplusplus
 
 #endif

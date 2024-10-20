@@ -21,7 +21,8 @@
 #include "orcacam_strerr.h"
 
 #ifdef __cplusplus
-// TODO: extern C
+extern "C"
+{
 #endif // __cplusplus
 
 #ifndef _Nullable
@@ -171,6 +172,6 @@ DCAMERR orca_get_value_text(ORCACAM cam, DCAMIDPROP prop, double value,
                             char *text, int32 textbytes);
 
 #ifdef __cplusplus
-// TODO: extern C
+}
 #endif // __cplusplus
 #endif // _ORCACAM_H_
