@@ -722,7 +722,7 @@ DCAMERR orca_get_mode(ORCACAM cam, DCAMPROPMODEVALUE *mode)
     assert(mode);
     DCAMERR err;
     double v;
-    err = ORCACALL(dcamprop_getvalue, cam->hdcam, DCAMPROP_TYPE_MODE, &v);
+    err = ORCACALL(dcamprop_getvalue, cam->hdcam, DCAM_IDPROP_SENSORMODE, &v);
     if (dcamerr_failed(err))
     {
         return err;
@@ -740,7 +740,7 @@ DCAMERR orca_switch_mode(ORCACAM cam, DCAMPROPMODEVALUE mode)
     }
     DCAMERR err;
     double v = (double)mode;
-    err = ORCACALL(dcamprop_setgetvalue, cam->hdcam, DCAMPROP_TYPE_MODE, &v, 0);
+    err = ORCACALL(dcamprop_setgetvalue, cam->hdcam, DCAM_IDPROP_SENSORMODE, &v, 0);
     DCAMPROPMODEVALUE new_mode = (DCAMPROPMODEVALUE)v;
     if (dcamerr_failed(err))
     {
