@@ -1,7 +1,7 @@
 #include <png++/png.hpp>
 #include <stdio.h>
-#include <unistd.h>
 #include <time.h>
+#include <unistd.h>
 
 #undef NDEBUG
 #include "orcacam.h"
@@ -41,7 +41,7 @@ int main()
     printf("Camera sensor size: %d x %d\n", info.width, info.height);
     printf("Camera pixel size: %.1f um x %.1f um\n", info.pixel_width,
            info.pixel_height);
-    
+
     // Get sensor temperature
     double temp;
     err = orca_get_temperature(cam, &temp);
@@ -59,7 +59,7 @@ int main()
         goto close_cam;
     }
     printf("Camera mode: 0x%x\n", mode);
-    
+
     // TODO: Switch to photon counting mode
     // ERROR: Function requires stable or unstable state
     // mode = DCAMPROP_SENSORMODE__PHOTONNUMBERRESOLVING;
@@ -68,7 +68,7 @@ int main()
     // {
     //     goto close_cam;
     // }
-    
+
     // TODO: Get the temperature set point
     // ERROR: Invalid property ID
     // err = orca_get_tempsetpoint(cam, &temp);
@@ -115,6 +115,29 @@ int main()
     //     goto close_cam;
     // }
 
+    // Get acquisition frame rate
+    double fps;
+    err = orca_get_acq_framerate(cam, &fps);
+    if (dcamerr_failed(err))
+    {
+        printf("Failed to get camera frame rate\n");
+    }
+    else
+    {
+        printf("Camera frame rate: %.1f fps\n", fps);
+    }
+
+    err = orca_set_acq_framerate(cam, 10.0);
+    if (dcamerr_failed(err))
+    {
+        printf("Failed to set camera frame rate\n");
+    }
+    else
+    {
+        orca_get_acq_framerate(cam, &fps);
+        printf("Set camera frame rate: %.1f fps\n", fps);
+    }
+
     // Start capturing frames
     err = orca_start_capture(cam, orca_frame_callback, NULL, 0);
     if (dcamerr_failed(err))
@@ -122,7 +145,7 @@ int main()
         goto close_cam;
     }
     printf("Started capturing frames\n");
-    sleep(10);
+    sleep(11);
     // Stop capturing frames
     err = orca_stop_capture(cam);
     if (dcamerr_failed(err))
@@ -138,7 +161,7 @@ void orca_frame_callback(ORCA_FRAME *frame, void *user_data,
                          size_t sz_user_data)
 {
     static struct timespec last_time;
-    static bool first = true;
+    static bool first  = true;
     static int32 count = 0;
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
@@ -151,9 +174,12 @@ void orca_frame_callback(ORCA_FRAME *frame, void *user_data,
             for (int32 x = 0; x < frame->width; x++)
             {
                 if (frame->fmt == DCAM_PIXELTYPE_MONO8)
-                    img[y][x] = ((unsigned char *)frame->data)[y * frame->width + x] << 8;
+                    img[y][x] =
+                        ((unsigned char *)frame->data)[y * frame->width + x]
+                        << 8;
                 else if (frame->fmt == DCAM_PIXELTYPE_MONO16)
-                    img[y][x] = ((unsigned short *)frame->data)[y * frame->width + x];
+                    img[y][x] =
+                        ((unsigned short *)frame->data)[y * frame->width + x];
                 else
                     img[y][x] = 0;
             }

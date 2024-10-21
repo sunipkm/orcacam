@@ -66,7 +66,14 @@ typedef struct _ORCA_FRAME
     int32 row_stride;   //!< Frame row stride (bytes)
 } ORCA_FRAME;
 
-typedef void (*OrcaFrameCallback)(ORCA_FRAME *, void *, size_t);
+/**
+ * @brief Orca camera frame callback
+ *
+ * @param frame Frame data
+ * @param user_data Pointer to user data
+ * @param sz_user_data Size of user data
+ */
+typedef void (*OrcaFrameCallback)(ORCA_FRAME * _Nonnull, void * _Nullable,  size_t);
 
 /**
  * @brief Default number of frames
@@ -74,8 +81,19 @@ typedef void (*OrcaFrameCallback)(ORCA_FRAME *, void *, size_t);
  */
 #define DEFAULT_FRAME_COUNT 10
 
+/**
+ * @brief ORCA Camera handle
+ *
+ */
 typedef struct _ORCACAM *ORCACAM;
 
+/**
+ * @brief Initialize a DCAM API data structure
+ *
+ * @param type Data structure type
+ * @param name Variable name
+ *
+ */
 #define ORCA_PTR_INIT(type, name)                                              \
     type name;                                                                 \
     {                                                                          \
@@ -83,6 +101,13 @@ typedef struct _ORCACAM *ORCACAM;
         name.size = sizeof(type);                                              \
     }
 
+/**
+ * @brief Initialize a DCAM API data structure with different size type name
+ *
+ * @param type Data structure type
+ * @param name Variable name
+ * @param sub Struct size field name
+ */
 #define ORCA_PTR_SUBINIT(type, name, sub)                                      \
     type name;                                                                 \
     {                                                                          \
@@ -91,7 +116,7 @@ typedef struct _ORCACAM *ORCACAM;
     }
 
 /**
- * @brief List all available devices
+ * @brief List all available devices.
  *
  * @param count Output number of devices
  * @param sz_initopt Size of initopt
@@ -117,65 +142,275 @@ DCAMERR orca_open_camera(int32 index, ORCACAM *_Nonnull cam, size_t num_frames);
  * @param info Output ORCA_CAM_INFO
  * @return DCAMERR
  */
-DCAMERR orca_device_info(ORCACAM cam, ORCA_CAM_INFO *info);
+DCAMERR orca_device_info(ORCACAM cam, ORCA_CAM_INFO *_Nonnull info);
 
+/**
+ * @brief Re-allocate the framebuffer
+ *
+ * @param cam ORCACAM handle
+ * @param num_frames Number of frames
+ * @return DCAMERR
+ */
 DCAMERR orca_realloc_framebuffer(ORCACAM cam, size_t num_frames);
 
-DCAMERR orca_get_frame_size(ORCACAM cam, int32 *width, int32 *height);
+/**
+ * @brief Get the frame width and height
+ *
+ * @param cam ORCACAM handle
+ * @param width Output width
+ * @param height Output height
+ * @return DCAMERR
+ */
+DCAMERR orca_get_frame_size(ORCACAM cam, int32 * _Nonnull width, int32 *_Nonnull height);
 
-DCAMERR orca_get_mode(ORCACAM cam, DCAMPROPMODEVALUE *mode);
+/**
+ * @brief Get camera sensor mode (DCAM_IDPROP_SENSORMODE)
+ *
+ * @param cam ORCACAM handle
+ * @param mode Output mode (DCAMPROPMODEVALUE::DCAMPROP_SENSORMODE__*)
+ * @return DCAMERR
+ */
+DCAMERR orca_get_mode(ORCACAM cam, DCAMPROPMODEVALUE *_Nonnull mode);
 
+/**
+ * @brief Set camera sensor mode (DCAM_IDPROP_SENSORMODE)
+ *
+ * @param cam ORCACAM handle
+ * @param mode Mode (DCAMPROPMODEVALUE::DCAMPROP_SENSORMODE__*)
+ * @return DCAMERR
+ */
 DCAMERR orca_switch_mode(ORCACAM cam, DCAMPROPMODEVALUE mode);
 
-DCAMERR orca_start_capture(ORCACAM cam, OrcaFrameCallback cb, void *user_data, size_t sz_user_data);
+/**
+ * @brief Start image acquisition
+ *
+ * @param cam ORCACAM handle
+ * @param cb Frame callback function
+ * @param user_data User data pointer
+ * @param sz_user_data Size of user data
+ * @return DCAMERR
+ */
+DCAMERR orca_start_capture(ORCACAM cam, OrcaFrameCallback _Nonnull cb, void *_Nullable user_data, size_t sz_user_data DCAM_DEFAULT_ARG);
 
+/**
+ * @brief Stop image acquisition
+ *
+ * @param cam ORCACAM handle
+ * @return DCAMERR
+ */
 DCAMERR orca_stop_capture(ORCACAM cam);
 
-DCAMERR orca_close_camera(ORCACAM *cam);
+/**
+ * @brief Close the camera and release resources
+ *
+ * @param cam ORCACAM handle
+ * @return DCAMERR
+ */
+DCAMERR orca_close_camera(ORCACAM *_Nonnull cam);
 
-DCAMERR orca_get_temperature(ORCACAM cam, double *temp);
+/**
+ * @brief Read sensor temperature
+ *
+ * @param cam ORCACAM handle
+ * @param temp Output temperature (default unit: Celsius)
+ * @return DCAMERR
+ */
+DCAMERR orca_get_temperature(ORCACAM cam, double *_Nonnull temp);
 
-DCAMERR orca_get_tempsetpoint(ORCACAM cam, double *temp);
+/**
+ * @brief Get sensor cooling setpoint
+ *
+ * @param cam ORCACAM handle
+ * @param temp Temperature setpoint (default unit: Celsius)
+ * @return DCAMERR
+ */
+DCAMERR orca_get_tempsetpoint(ORCACAM cam, double *_Nonnull temp);
 
+/**
+ * @brief Set sensor cooling setpoint
+ *
+ * @param cam ORCACAM handle
+ * @param temp Temperature setpoint (default unit: Celsius)
+ * @return DCAMERR
+ */
 DCAMERR orca_set_tempsetpoint(ORCACAM cam, double temp);
 
-DCAMERR orca_get_sensor_size(ORCACAM cam, int32 *width, int32 *height);
+/**
+ * @brief Get sensor size
+ *
+ * @param cam ORCACAM handle
+ * @param width Sensor width
+ * @param height Sensor height
+ * @return DCAMERR
+ */
+DCAMERR orca_get_sensor_size(ORCACAM cam, int32 *_Nonnull width, int32 *_Nonnull height);
 
-DCAMERR orca_get_exposure(ORCACAM cam, double *exposure);
+/**
+ * @brief Get exposure time
+ *
+ * @param cam ORCACAM handle
+ * @param exposure Exposure time (seconds)
+ * @return DCAMERR
+ */
+DCAMERR orca_get_exposure(ORCACAM cam, double *_Nonnull exposure);
 
+/**
+ * @brief Set exposure time
+ *
+ * @param cam ORCACAM handle
+ * @param exposure Exposure time (seconds)
+ * @return DCAMERR
+ */
 DCAMERR orca_set_exposure(ORCACAM cam, double exposure);
 
-DCAMERR orca_get_pixel_fmt(ORCACAM cam, DCAM_PIXELTYPE *fmt);
+/**
+ * @brief Get pixel format
+ *
+ * @param cam ORCACAM handle
+ * @param fmt Pixel format (DCAM_PIXELTYPE)
+ * @return DCAMERR
+ */
+DCAMERR orca_get_pixel_fmt(ORCACAM cam, DCAM_PIXELTYPE *_Nonnull fmt);
 
+/**
+ * @brief Set pixel format
+ *
+ * @param cam ORCACAM handle
+ * @param fmt Pixel format (DCAM_PIXELTYPE)
+ * @return DCAMERR
+ */
 DCAMERR orca_set_pixel_fmt(ORCACAM cam, DCAM_PIXELTYPE fmt);
 
-DCAMERR orca_get_roi(ORCACAM cam, int32 *x, int32 *y, int32 *w, int32 *h);
+/**
+ * @brief Get region of interest (ROI)
+ *
+ * @param cam ORCACAM handle
+ * @param x X-coordinate
+ * @param y Y-coordinate
+ * @param w Width
+ * @param h Height
+ * @return DCAMERR
+ */
+DCAMERR orca_get_roi(ORCACAM cam, int32 *_Nonnull x, int32 *_Nonnull y, int32 *_Nonnull w, int32 *_Nonnull h);
 
+/**
+ * @brief Set region of interest (ROI)
+ *
+ * @param cam ORCACAM handle
+ * @param x X-coordinate
+ * @param y Y-coordinate
+ * @param w Width
+ * @param h Height
+ * @return DCAMERR
+ */
 DCAMERR orca_set_roi(ORCACAM cam, int32 x, int32 y, int32 w, int32 h);
 
-DCAMERR orca_get_acq_framerate(ORCACAM cam, double *fps);
+/**
+ * @brief Get acquisition frame rate
+ *
+ * @param cam ORCACAM handle
+ * @param fps Frame rate (frames per second)
+ * @return DCAMERR
+ */
+DCAMERR orca_get_acq_framerate(ORCACAM cam, double *_Nonnull fps);
 
+/**
+ * @brief Set acquisition frame rate
+ *
+ * @param cam ORCACAM handle
+ * @param fps Frame rate (frames per second)
+ * @return DCAMERR
+ */
 DCAMERR orca_set_acq_framerate(ORCACAM cam, double fps);
 
-DCAMERR orca_get_attr(ORCACAM cam, DCAMIDPROP prop, DCAMPROP_ATTR *attr);
+/**
+ * @brief Get property attributes. NOT FOR GENERAL USE.
+ *
+ * @param cam ORCACAM handle
+ * @param prop Property ID
+ * @param attr Output property attributes
+ * @return DCAMERR
+ */
+DCAMERR orca_get_attr(ORCACAM cam, DCAMIDPROP prop, DCAMPROP_ATTR *_Nonnull attr);
 
-DCAMERR orca_get_value(ORCACAM cam, DCAMIDPROP prop, double *value);
+/**
+ * @brief Get property value. NOT FOR GENERAL USE.
+ *
+ * @param cam ORCACAM handle
+ * @param prop Property ID
+ * @param value Output property value
+ * @return DCAMERR
+ */
+DCAMERR orca_get_value(ORCACAM cam, DCAMIDPROP prop, double *_Nonnull value);
 
+/**
+ * @brief Set property value. NOT FOR GENERAL USE.
+ *
+ * @param cam ORCACAM handle
+ * @param prop Property ID
+ * @param value Property value
+ * @return DCAMERR
+ */
 DCAMERR orca_set_value(ORCACAM cam, DCAMIDPROP prop, double value);
 
-DCAMERR orca_setget_value(ORCACAM cam, DCAMIDPROP prop, double *value,
+/**
+ * @brief Set and get property value. NOT FOR GENERAL USE.
+ *
+ * @param cam ORCACAM handle
+ * @param prop Property ID
+ * @param value Property value
+ * @param option Property option
+ * @return DCAMERR
+ */
+DCAMERR orca_setget_value(ORCACAM cam, DCAMIDPROP prop, double *_Nonnull value,
                           int32 option DCAM_DEFAULT_ARG);
 
-DCAMERR orca_query_value(ORCACAM cam, DCAMIDPROP prop, double *value,
+/**
+ * @brief Query property value. NOT FOR GENERAL USE.
+ *
+ * @param cam ORCACAM handle
+ * @param prop Property ID
+ * @param value Property value
+ * @param option Property option
+ * @return DCAMERR
+ */
+DCAMERR orca_query_value(ORCACAM cam, DCAMIDPROP prop, double *_Nonnull value,
                          int32 option DCAM_DEFAULT_ARG);
 
-DCAMERR orca_get_next_id(ORCACAM cam, int32 *prop,
+/**
+ * @brief Get next property ID. NOT FOR GENERAL USE.
+ *
+ * @param cam ORCACAM handle
+ * @param prop Property ID
+ * @param option Property option
+ * @return DCAMERR
+ */
+DCAMERR orca_get_next_id(ORCACAM cam, int32 *_Nonnull prop,
                          int32 option DCAM_DEFAULT_ARG);
 
-DCAMERR orca_get_name(ORCACAM cam, int32 prop, char *text, int32 textbytes);
+/**
+ * @brief Get property name. NOT FOR GENERAL USE.
+ *
+ * @param cam ORCACAM handle
+ * @param prop Property ID
+ * @param text Property name text output buffer
+ * @param textbytes Text buffer size
+ * @return DCAMERR
+ */
+DCAMERR orca_get_name(ORCACAM cam, int32 prop, char *_Nonnull text, int32 textbytes);
 
+/**
+ * @brief Get property value text. NOT FOR GENERAL USE.
+ *
+ * @param cam ORCACAM handle
+ * @param prop Property ID
+ * @param value Property value
+ * @param text Property value text output buffer
+ * @param textbytes Text buffer size
+ * @return DCAMERR
+ */
 DCAMERR orca_get_value_text(ORCACAM cam, DCAMIDPROP prop, double value,
-                            char *text, int32 textbytes);
+                            char *_Nonnull text, int32 textbytes);
 
 #ifdef __cplusplus
 }
