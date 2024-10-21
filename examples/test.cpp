@@ -86,14 +86,35 @@ int main()
         goto close_cam;
     }
     printf("Camera exposure: %.6f s\n", exposure);
-
-    // Set ROI
-    err = orca_set_roi(cam, 0, 0, 128, 128);
+    // Set exposure time
+    err = orca_set_exposure(cam, 0.0001);
     if (dcamerr_failed(err))
     {
         goto close_cam;
     }
-    
+    err = orca_get_exposure(cam, &exposure);
+    if (dcamerr_failed(err))
+    {
+        goto close_cam;
+    }
+    printf("Camera exposure: %.6f s\n", exposure);
+
+    // Get pixel type
+    DCAM_PIXELTYPE fmt;
+    err = orca_get_pixel_fmt(cam, &fmt);
+    if (dcamerr_failed(err))
+    {
+        goto close_cam;
+    }
+    printf("Camera pixel format: %d\n", fmt);
+
+    // Set ROI
+    // err = orca_set_roi(cam, 0, 0, 128, 128);
+    // if (dcamerr_failed(err))
+    // {
+    //     goto close_cam;
+    // }
+
     // Start capturing frames
     err = orca_start_capture(cam, orca_frame_callback, NULL, 0);
     if (dcamerr_failed(err))
@@ -129,7 +150,12 @@ void orca_frame_callback(ORCA_FRAME *frame, void *user_data,
         {
             for (int32 x = 0; x < frame->width; x++)
             {
-                img[y][x] = frame->data[y * frame->width + x];
+                if (frame->fmt == DCAM_PIXELTYPE_MONO8)
+                    img[y][x] = ((unsigned char *)frame->data)[y * frame->width + x] << 8;
+                else if (frame->fmt == DCAM_PIXELTYPE_MONO16)
+                    img[y][x] = ((unsigned short *)frame->data)[y * frame->width + x];
+                else
+                    img[y][x] = 0;
             }
         }
         img.write("frame.png");
