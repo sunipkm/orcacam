@@ -378,6 +378,11 @@ DCAMERR orca_set_pixel_fmt(ORCACAM cam, DCAM_PIXELTYPE fmt)
     }
     err = ORCACALL(dcamprop_setvalue, cam->hdcam, DCAM_IDPROP_IMAGE_PIXELTYPE,
                    (double)fmt);
+    if (dcamerr_failed(err))
+    {
+        return err;
+    }
+    err = orca_realloc_framebuffer(cam, cam->num_frames);
     return err;
 }
 
@@ -481,6 +486,11 @@ DCAMERR orca_set_roi(ORCACAM cam, int32 x, int32 y, int32 w, int32 h)
     }
     err = ORCACALL(dcamprop_setvalue, cam->hdcam, DCAM_IDPROP_SUBARRAYMODE,
                    DCAMPROP_MODE__ON);
+    if (dcamerr_failed(err))
+    {
+        return err;
+    }
+    err = orca_realloc_framebuffer(cam, cam->num_frames);
     return err;
 }
 
