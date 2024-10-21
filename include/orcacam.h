@@ -39,14 +39,18 @@ extern "C"
  */
 typedef struct _ORCA_CAM_INFO
 {
-    char vendor[64];   /*<! Camera vendor */
-    char model[64];    /*<! Camera model */
-    char id[64];       /*<! Camera ID */
-    char bus[64];      /*<! Camera bus */
-    char cam_ver[64];  /*<! Camera version */
-    char drv_ver[64];  /*<! Driver version */
-    char mod_ver[64];  /*<! Module version */
-    char dcam_ver[64]; /*<! DCAM API version */
+    char vendor[64];     /*<! Camera vendor */
+    char model[64];      /*<! Camera model */
+    char id[64];         /*<! Camera ID */
+    char bus[64];        /*<! Camera bus */
+    char cam_ver[64];    /*<! Camera version */
+    char drv_ver[64];    /*<! Driver version */
+    char mod_ver[64];    /*<! Module version */
+    char dcam_ver[64];   /*<! DCAM API version */
+    int32 width;         /*<! Sensor width */
+    int32 height;        /*<! Sensor height */
+    double pixel_width;  /*<! Pixel width */
+    double pixel_height; /*<! Pixel height */
 } ORCA_CAM_INFO;
 
 /**
@@ -131,7 +135,9 @@ DCAMERR orca_close_camera(ORCACAM *cam);
 
 DCAMERR orca_get_temperature(ORCACAM cam, double *temp);
 
-DCAMERR orca_set_temperature(ORCACAM cam, double temp);
+DCAMERR orca_get_tempsetpoint(ORCACAM cam, double *temp);
+
+DCAMERR orca_set_tempsetpoint(ORCACAM cam, double temp);
 
 DCAMERR orca_get_sensor_size(ORCACAM cam, int32 *width, int32 *height);
 
