@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     }
     int32 count;
     ORCA_FRAME frame;
-    DCAMERR err    = orca_list_devices(&count, 0, NULL);
+    DCAMERR err = orca_list_devices(&count, 0, NULL);
     if (orcaerr_failed(err))
     {
         return 0;
@@ -104,6 +104,19 @@ int main(int argc, char *argv[])
         goto close_cam;
     }
     printf("Camera mode: %s\n", sensormode_str(mode));
+    if (mode == DCAMPROP_SENSORMODE__PHOTONNUMBERRESOLVING)
+    {
+        double fmt = DCAM_PIXELTYPE_MONO8;
+        err = orca_setget_value(cam, DCAM_IDPROP_IMAGE_PIXELTYPE, &fmt, 0);
+        if (orcaerr_failed(err))
+        {
+            printf("Failed to set camera pixel format\n");
+        }
+        else
+        {
+            printf("Set camera pixel format: %d\n", (int)fmt);
+        }
+    }
 
     // TODO: Get the temperature set point
     // ERROR: Invalid property ID
@@ -191,7 +204,7 @@ int main(int argc, char *argv[])
     if (!orcaerr_failed(err))
     {
         struct timespec last;
-        int captured = 0;
+        int captured              = 0;
         double framerate_measured = 0.0;
         while (captured < 10)
         {
@@ -217,27 +230,40 @@ int main(int argc, char *argv[])
                 framerate_measured *= captured - 1;
                 framerate_measured += 1.0 / dt;
                 framerate_measured /= captured;
-                last               = now;
+                last = now;
             }
             captured++;
         }
-        png::image<png::gray_pixel_16> img(frame.width, frame.height);
-        for (int32 y = 0; y < frame.height; y++)
+        if (frame.fmt == DCAM_PIXELTYPE_MONO8)
         {
-            for (int32 x = 0; x < frame.width; x++)
+            png::image<png::gray_pixel> img(frame.width, frame.height);
+            for (int32 y = 0; y < frame.height; y++)
             {
-                if (frame.fmt == DCAM_PIXELTYPE_MONO8)
+                for (int32 x = 0; x < frame.width; x++)
+                {
                     img[y][x] =
-                        ((unsigned char *)frame.data)[y * frame.width + x]
-                        << 8;
-                else if (frame.fmt == DCAM_PIXELTYPE_MONO16)
+                        ((unsigned char *)frame.data)[y * frame.width + x];
+                }
+            }
+            img.write("frame.png");
+        }
+        else if (frame.fmt == DCAM_PIXELTYPE_MONO16)
+        {
+            png::image<png::gray_pixel_16> img(frame.width, frame.height);
+            for (int32 y = 0; y < frame.height; y++)
+            {
+                for (int32 x = 0; x < frame.width; x++)
+                {
                     img[y][x] =
                         ((unsigned short *)frame.data)[y * frame.width + x];
-                else
-                    img[y][x] = 0;
+                }
             }
+            img.write("frame.png");
         }
-        img.write("frame.png");
+        else
+        {
+            printf("Unsupported pixel format\n");
+        }
         err = orca_stop_acquisition(cam);
         if (orcaerr_failed(err))
         {
