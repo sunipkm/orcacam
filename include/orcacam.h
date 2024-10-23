@@ -192,7 +192,7 @@ DCAMERR orca_switch_mode(ORCACAM cam, DCAMPROPMODEVALUE mode);
 DCAMERR orca_start_acquisition(ORCACAM cam, ORCA_FRAME *_Nonnull frame);
 
 /**
- * @brief Acquire an image frame
+ * @brief Acquire an image frame (no callback API)
  *
  * @param cam ORCACAM handle
  * @param frame Frame handle, passed through orca_start_acquisition. orca_acquire_image fills in the frame data.
@@ -221,7 +221,7 @@ DCAMERR orca_stop_acquisition(ORCACAM cam);
 DCAMERR orca_start_capture(ORCACAM cam, OrcaFrameCallback _Nonnull cb, void *_Nullable user_data, size_t sz_user_data DCAM_DEFAULT_ARG);
 
 /**
- * @brief Stop image acquisition
+ * @brief Stop image acquisition (callback API)
  *
  * @param cam ORCACAM handle
  * @return DCAMERR
