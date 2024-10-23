@@ -24,7 +24,7 @@ extern "C"
  * @param err DCAMERR error code
  * @return int 1 if failed, 0 otherwise
  */
-static inline int dcamerr_failed(DCAMERR err) { return (int)err < 0; }
+static inline int orcaerr_failed(DCAMERR err) { return (int)err < 0; }
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Wswitch-enum"

@@ -15,7 +15,7 @@
 #define ORCACALL(func, ...)                                                    \
     ({                                                                         \
         DCAMERR err = func(__VA_ARGS__);                                       \
-        if (dcamerr_failed(err))                                               \
+        if (orcaerr_failed(err))                                               \
         {                                                                      \
             fprintf(stderr, "%s:%d:%s() -> %s\n", __FILE__, __LINE__,          \
                     __func__, orcacam_sterr(err));                             \
@@ -30,7 +30,7 @@ static void *orcacam_capture_thread(void *inp);
 void orcapi_uninit(void)
 {
     DCAMERR err = dcamapi_uninit();
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         fprintf(stderr, "ERROR: Could not de-init DCAMAPI -> %s (%d)\n",
                 orcacam_sterr(err), err);
@@ -71,7 +71,7 @@ DCAMERR orca_list_devices(int32 *count, int32 sz_initopt, const int32 *initopt)
     init.initoptionbytes = initopt ? sz_initopt : 0;
     init.initoption      = initopt;
     DCAMERR err          = ORCACALL(dcamapi_init, &init);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         *count = 0;
         return err;
@@ -98,7 +98,7 @@ DCAMERR orca_open_camera(int32 idx, ORCACAM *hdcam, size_t num_frames)
     ORCA_PTR_INIT(DCAMDEV_OPEN, open);
     open.index = idx;
     err        = ORCACALL(dcamdev_open, &open);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         goto free_cam;
     }
@@ -107,7 +107,7 @@ DCAMERR orca_open_camera(int32 idx, ORCACAM *hdcam, size_t num_frames)
     ORCA_PTR_INIT(DCAMWAIT_OPEN, wait);
     wait.hdcam = open.hdcam;
     err        = ORCACALL(dcamwait_open, &wait);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         goto close_camera;
     }
@@ -115,12 +115,12 @@ DCAMERR orca_open_camera(int32 idx, ORCACAM *hdcam, size_t num_frames)
     cam->capturing = ATOMIC_VAR_INIT(false);
     // Get the sensor size and set the ROI
     err = orca_get_sensor_size(cam, &w, &h);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         goto close_wait;
     }
     err = orca_set_roi(cam, 0, 0, w, h);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         goto close_wait;
     }
@@ -162,7 +162,7 @@ DCAMERR orca_realloc_framebuffer(ORCACAM cam, size_t num_frames)
     double v;
     err = ORCACALL(dcamprop_getvalue, cam->hdcam, DCAM_IDPROP_BUFFER_FRAMEBYTES,
                    &v);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
@@ -222,7 +222,7 @@ DCAMERR orca_device_info(ORCACAM cam, ORCA_CAM_INFO *info)
     param.textbytes = sizeof(info->vendor);
     param.iString   = DCAM_IDSTR_VENDOR;
     err             = dcamdev_getstring(cam->hdcam, &param);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
@@ -230,7 +230,7 @@ DCAMERR orca_device_info(ORCACAM cam, ORCA_CAM_INFO *info)
     param.textbytes = sizeof(info->model);
     param.iString   = DCAM_IDSTR_MODEL;
     err             = dcamdev_getstring(cam->hdcam, &param);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
@@ -238,7 +238,7 @@ DCAMERR orca_device_info(ORCACAM cam, ORCA_CAM_INFO *info)
     param.textbytes = sizeof(info->id);
     param.iString   = DCAM_IDSTR_CAMERAID;
     err             = dcamdev_getstring(cam->hdcam, &param);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
@@ -246,7 +246,7 @@ DCAMERR orca_device_info(ORCACAM cam, ORCA_CAM_INFO *info)
     param.textbytes = sizeof(info->bus);
     param.iString   = DCAM_IDSTR_BUS;
     err             = dcamdev_getstring(cam->hdcam, &param);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
@@ -254,7 +254,7 @@ DCAMERR orca_device_info(ORCACAM cam, ORCA_CAM_INFO *info)
     param.textbytes = sizeof(info->cam_ver);
     param.iString   = DCAM_IDSTR_CAMERAVERSION;
     err             = dcamdev_getstring(cam->hdcam, &param);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
@@ -262,7 +262,7 @@ DCAMERR orca_device_info(ORCACAM cam, ORCA_CAM_INFO *info)
     param.textbytes = sizeof(info->drv_ver);
     param.iString   = DCAM_IDSTR_DRIVERVERSION;
     err             = dcamdev_getstring(cam->hdcam, &param);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
@@ -270,7 +270,7 @@ DCAMERR orca_device_info(ORCACAM cam, ORCA_CAM_INFO *info)
     param.textbytes = sizeof(info->mod_ver);
     param.iString   = DCAM_IDSTR_MODULEVERSION;
     err             = dcamdev_getstring(cam->hdcam, &param);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
@@ -278,38 +278,38 @@ DCAMERR orca_device_info(ORCACAM cam, ORCA_CAM_INFO *info)
     param.textbytes = sizeof(info->dcam_ver);
     param.iString   = DCAM_IDSTR_DCAMAPIVERSION;
     err             = dcamdev_getstring(cam->hdcam, &param);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
     double w, h;
     err = ORCACALL(dcamprop_getvalue, cam->hdcam,
                    DCAM_IDPROP_IMAGEDETECTOR_PIXELNUMHORZ, &w);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
     err = ORCACALL(dcamprop_getvalue, cam->hdcam,
                    DCAM_IDPROP_IMAGEDETECTOR_PIXELNUMVERT, &h);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
-    info->width = (int32)w;
+    info->width  = (int32)w;
     info->height = (int32)h;
-    err = ORCACALL(dcamprop_getvalue, cam->hdcam,
-                   DCAM_IDPROP_IMAGEDETECTOR_PIXELWIDTH, &w);
-    if (dcamerr_failed(err))
+    err          = ORCACALL(dcamprop_getvalue, cam->hdcam,
+                            DCAM_IDPROP_IMAGEDETECTOR_PIXELWIDTH, &w);
+    if (orcaerr_failed(err))
     {
         return err;
     }
     err = ORCACALL(dcamprop_getvalue, cam->hdcam,
                    DCAM_IDPROP_IMAGEDETECTOR_PIXELHEIGHT, &h);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
-    info->pixel_width = w;
+    info->pixel_width  = w;
     info->pixel_height = h;
     return err;
 }
@@ -323,13 +323,13 @@ DCAMERR orca_get_sensor_size(ORCACAM cam, int32 *wid, int32 *hei)
     double w, h;
     err = ORCACALL(dcamprop_getvalue, cam->hdcam,
                    DCAM_IDPROP_IMAGEDETECTOR_PIXELNUMHORZ, &w);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
     err = ORCACALL(dcamprop_getvalue, cam->hdcam,
                    DCAM_IDPROP_IMAGEDETECTOR_PIXELNUMVERT, &h);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
@@ -393,7 +393,7 @@ DCAMERR orca_get_pixel_fmt(ORCACAM cam, DCAM_PIXELTYPE *fmt)
     double f;
     err = ORCACALL(dcamprop_getvalue, cam->hdcam, DCAM_IDPROP_IMAGE_PIXELTYPE,
                    &f);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
@@ -419,7 +419,7 @@ DCAMERR orca_set_pixel_fmt(ORCACAM cam, DCAM_PIXELTYPE fmt)
     }
     err = ORCACALL(dcamprop_setvalue, cam->hdcam, DCAM_IDPROP_IMAGE_PIXELTYPE,
                    (double)fmt);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
@@ -435,13 +435,13 @@ DCAMERR orca_get_frame_size(ORCACAM cam, int32 *w, int32 *h)
     DCAMERR err;
     double v;
     err = ORCACALL(dcamprop_getvalue, cam->hdcam, DCAM_IDPROP_IMAGE_WIDTH, &v);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
     *w  = (int32)v;
     err = ORCACALL(dcamprop_getvalue, cam->hdcam, DCAM_IDPROP_IMAGE_HEIGHT, &v);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
@@ -459,27 +459,27 @@ DCAMERR orca_get_roi(ORCACAM cam, int32 *x, int32 *y, int32 *w, int32 *h)
     DCAMERR err;
     double v;
     err = ORCACALL(dcamprop_getvalue, cam->hdcam, DCAM_IDPROP_SUBARRAYHPOS, &v);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
     *x  = (int32)v;
     err = ORCACALL(dcamprop_getvalue, cam->hdcam, DCAM_IDPROP_SUBARRAYVPOS, &v);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
     *y = (int32)v;
     err =
         ORCACALL(dcamprop_getvalue, cam->hdcam, DCAM_IDPROP_SUBARRAYHSIZE, &v);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
     *w = (int32)v;
     err =
         ORCACALL(dcamprop_getvalue, cam->hdcam, DCAM_IDPROP_SUBARRAYVSIZE, &v);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
@@ -496,43 +496,43 @@ DCAMERR orca_set_roi(ORCACAM cam, int32 x, int32 y, int32 w, int32 h)
     }
     DCAMERR err;
     err = ORCACALL(dcambuf_release, cam->hdcam, 0);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
     err = ORCACALL(dcamprop_setvalue, cam->hdcam, DCAM_IDPROP_SUBARRAYMODE,
                    DCAMPROP_MODE__OFF);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
     err = ORCACALL(dcamprop_setvalue, cam->hdcam, DCAM_IDPROP_SUBARRAYHPOS,
                    (double)x);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
     err = ORCACALL(dcamprop_setvalue, cam->hdcam, DCAM_IDPROP_SUBARRAYVPOS,
                    (double)y);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
     err = ORCACALL(dcamprop_setvalue, cam->hdcam, DCAM_IDPROP_SUBARRAYHSIZE,
                    (double)w);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
     err = ORCACALL(dcamprop_setvalue, cam->hdcam, DCAM_IDPROP_SUBARRAYVSIZE,
                    (double)h);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
     err = ORCACALL(dcamprop_setvalue, cam->hdcam, DCAM_IDPROP_SUBARRAYMODE,
                    DCAMPROP_MODE__ON);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
@@ -571,7 +571,7 @@ DCAMERR orca_get_attr(ORCACAM cam, DCAMIDPROP prop, DCAMPROP_ATTR *attr)
     ORCA_PTR_SUBINIT(DCAMPROP_ATTR, param, cbSize);
     param.iProp = prop;
     err         = ORCACALL(dcamprop_getattr, cam->hdcam, &param);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
@@ -650,66 +650,217 @@ DCAMERR orca_get_value_text(ORCACAM cam, DCAMIDPROP prop, double value,
     return err;
 }
 
-DCAMERR orca_start_capture(ORCACAM cam, OrcaFrameCallback cb, void *user_data,
-                           size_t sz_user_data)
+DCAMERR orca_start_acquisition(ORCACAM cam, ORCA_FRAME *_Nonnull frame)
 {
     assert(cam);
-    assert(cb);
-    if (atomic_load(&(cam->capturing)))
-    {
-        return DCAMERR_BUSY;
-    }
+    assert(frame);
     DCAMERR err;
     int32 topoffset, rowbytes, width, height;
     DCAM_PIXELTYPE pixeltype;
     double v;
     err = ORCACALL(dcamprop_getvalue, cam->hdcam,
                    DCAM_IDPROP_BUFFER_TOPOFFSETBYTES, &v);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
     topoffset = (int32)v;
     err = ORCACALL(dcamprop_getvalue, cam->hdcam, DCAM_IDPROP_BUFFER_ROWBYTES,
                    &v);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
     rowbytes = (int32)v;
     err = ORCACALL(dcamprop_getvalue, cam->hdcam, DCAM_IDPROP_IMAGE_PIXELTYPE,
                    &v);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
     pixeltype = (DCAM_PIXELTYPE)v;
     err = ORCACALL(dcamprop_getvalue, cam->hdcam, DCAM_IDPROP_IMAGE_WIDTH, &v);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
     width = (int32)v;
     err = ORCACALL(dcamprop_getvalue, cam->hdcam, DCAM_IDPROP_IMAGE_HEIGHT, &v);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
-    height                        = (int32)v;
+    height = (int32)v;
+
+    if (atomic_load(&(cam->capturing)))
+    {
+        return DCAMERR_BUSY;
+    }
+    else
+    {
+        atomic_store(&(cam->capturing), true);
+    }
 
     ORCA_PTR_INIT(DCAMBUF_ATTACH, attach);
     attach.iKind       = DCAMBUF_ATTACHKIND_FRAME;
     attach.buffer      = cam->frameptr;
     attach.buffercount = cam->num_frames;
     err                = ORCACALL(dcambuf_attach, cam->hdcam, &attach);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         atomic_store(&(cam->capturing), false);
         return err;
     }
 
-    struct _ORCA_THREAD_ARGS *args = (struct _ORCA_THREAD_ARGS *)malloc(
-        sizeof(struct _ORCA_THREAD_ARGS));
+    atomic_store(&(cam->capturing), true);
+    err = dcamcap_start(cam->hdcam, DCAMCAP_START_SEQUENCE);
+    if (orcaerr_failed(err))
+    {
+        atomic_store(&(cam->capturing), false);
+        return err;
+    }
+    frame->fmt        = pixeltype;
+    frame->width      = width;
+    frame->height     = height;
+    frame->row_stride = rowbytes;
+    frame->data       = NULL;
+    frame->rsvd       = topoffset;
+    return DCAMERR_SUCCESS;
+}
+
+DCAMERR orca_stop_acquisition(ORCACAM cam)
+{
+    assert(cam);
+    if (!atomic_load(&(cam->capturing)))
+    {
+        return DCAMERR_NOTREADY;
+    }
+    DCAMERR err = ORCACALL(dcamcap_stop, cam->hdcam);
+    if (orcaerr_failed(err))
+    {
+        return err;
+    }
+    err = ORCACALL(dcambuf_release, cam->hdcam, 0);
+    if (orcaerr_failed(err))
+    {
+        return err;
+    }
+    err = ORCACALL(dcamwait_abort, cam->hwait);
+    atomic_store(&(cam->capturing), false);
+    return err;
+}
+
+DCAMERR orca_acquire_image(ORCACAM cam, ORCA_FRAME *_Nonnull frame,
+                           int32 timeout)
+{
+    assert(cam);
+    assert(frame);
+    DCAMERR err;
+
+    if (!atomic_load(&(cam->capturing)))
+    {
+        return DCAMERR_NOTREADY;
+    }
+    // Start the wait handler
+    ORCA_PTR_INIT(DCAMWAIT_START, start);
+    start.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
+    start.timeout   = timeout;
+
+    // transfer info
+    ORCA_PTR_INIT(DCAMCAP_TRANSFERINFO, xferinfo);
+
+    err = ORCACALL(dcamwait_start, cam->hwait, &start);
+    if (orcaerr_failed(err))
+    {
+        if (err != DCAMERR_TIMEOUT)
+        {
+            return orca_stop_acquisition(cam);
+        }
+        else
+        {
+            return err;
+        }
+    }
+    // get capture info
+    err = ORCACALL(dcamcap_transferinfo, cam->hdcam, &xferinfo);
+    if (orcaerr_failed(err))
+    {
+        return err;
+    }
+    // create the frame
+    char *buf = (char *)(cam->frameptr[xferinfo.nNewestFrameIndex]);
+    buf += frame->rsvd; // top offset
+    frame->data = buf;
+
+    return DCAMERR_SUCCESS;
+}
+
+DCAMERR orca_start_capture(ORCACAM cam, OrcaFrameCallback cb, void *user_data,
+                           size_t sz_user_data)
+{
+    assert(cam);
+    assert(cb);
+
+    DCAMERR err;
+    int32 topoffset, rowbytes, width, height;
+    DCAM_PIXELTYPE pixeltype;
+    double v;
+    err = ORCACALL(dcamprop_getvalue, cam->hdcam,
+                   DCAM_IDPROP_BUFFER_TOPOFFSETBYTES, &v);
+    if (orcaerr_failed(err))
+    {
+        return err;
+    }
+    topoffset = (int32)v;
+    err = ORCACALL(dcamprop_getvalue, cam->hdcam, DCAM_IDPROP_BUFFER_ROWBYTES,
+                   &v);
+    if (orcaerr_failed(err))
+    {
+        return err;
+    }
+    rowbytes = (int32)v;
+    err = ORCACALL(dcamprop_getvalue, cam->hdcam, DCAM_IDPROP_IMAGE_PIXELTYPE,
+                   &v);
+    if (orcaerr_failed(err))
+    {
+        return err;
+    }
+    pixeltype = (DCAM_PIXELTYPE)v;
+    err = ORCACALL(dcamprop_getvalue, cam->hdcam, DCAM_IDPROP_IMAGE_WIDTH, &v);
+    if (orcaerr_failed(err))
+    {
+        return err;
+    }
+    width = (int32)v;
+    err = ORCACALL(dcamprop_getvalue, cam->hdcam, DCAM_IDPROP_IMAGE_HEIGHT, &v);
+    if (orcaerr_failed(err))
+    {
+        return err;
+    }
+    height = (int32)v;
+
+    if (atomic_load(&(cam->capturing)))
+    {
+        return DCAMERR_BUSY;
+    }
+    else
+    {
+        atomic_store(&(cam->capturing), true);
+    }
+
+    ORCA_PTR_INIT(DCAMBUF_ATTACH, attach);
+    attach.iKind       = DCAMBUF_ATTACHKIND_FRAME;
+    attach.buffer      = cam->frameptr;
+    attach.buffercount = cam->num_frames;
+    err                = ORCACALL(dcambuf_attach, cam->hdcam, &attach);
+    if (orcaerr_failed(err))
+    {
+        atomic_store(&(cam->capturing), false);
+        return err;
+    }
+
+    struct _ORCA_THREAD_ARGS *args =
+        (struct _ORCA_THREAD_ARGS *)malloc(sizeof(struct _ORCA_THREAD_ARGS));
     if (!args)
     {
         return DCAMERR_NORESOURCE;
@@ -733,7 +884,7 @@ DCAMERR orca_start_capture(ORCACAM cam, OrcaFrameCallback cb, void *user_data,
         return DCAMERR_NORESOURCE;
     }
     err = dcamcap_start(cam->hdcam, DCAMCAP_START_SEQUENCE);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         atomic_store(&(cam->capturing), false);
         pthread_cancel(cam->capture_thread);
@@ -751,18 +902,18 @@ DCAMERR orca_stop_capture(ORCACAM cam)
         return DCAMERR_NOTREADY;
     }
     DCAMERR err = ORCACALL(dcamcap_stop, cam->hdcam);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
     err = ORCACALL(dcambuf_release, cam->hdcam, 0);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
     err = ORCACALL(dcamwait_abort, cam->hwait);
     atomic_store(&(cam->capturing), false);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         pthread_cancel(cam->capture_thread);
         return err;
@@ -776,7 +927,7 @@ DCAMERR orca_stop_capture(ORCACAM cam)
     if (ret)
     {
         struct _ORCA_THREAD_ARGS *args = (struct _ORCA_THREAD_ARGS *)ret;
-        err = args->ret;
+        err                            = args->ret;
         // printf("Capture thread returned %s\n", orcacam_sterr(err));
         // fflush(stdout);
         free(ret);
@@ -795,12 +946,12 @@ DCAMERR orca_close_camera(ORCACAM *cam_)
         goto ret;
     }
     err = orca_stop_capture(cam);
-    if (dcamerr_failed(err) && err != DCAMERR_NOTREADY)
+    if (orcaerr_failed(err) && err != DCAMERR_NOTREADY)
     {
         fprintf(stderr, "Failed to stop capture: %s\n", orcacam_sterr(err));
     }
     err = ORCACALL(dcamwait_close, cam->hwait);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         fprintf(stderr, "Failed to close wait object: %s\n",
                 orcacam_sterr(err));
@@ -809,7 +960,7 @@ DCAMERR orca_close_camera(ORCACAM *cam_)
     // fflush(stdout);
     sleep(1);
     err = ORCACALL(dcamdev_close, cam->hdcam);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         fprintf(stderr, "Failed to close camera: %s\n", orcacam_sterr(err));
     }
@@ -831,7 +982,7 @@ DCAMERR orca_close_camera(ORCACAM *cam_)
     // printf("Freed camera object\n");
     // fflush(stdout);
     *cam_ = NULL; // prevent use after free
-    err = dcamapi_uninit();
+    err   = dcamapi_uninit();
 ret:
     return err;
 }
@@ -843,7 +994,7 @@ DCAMERR orca_get_mode(ORCACAM cam, DCAMPROPMODEVALUE *mode)
     DCAMERR err;
     double v;
     err = ORCACALL(dcamprop_getvalue, cam->hdcam, DCAM_IDPROP_SENSORMODE, &v);
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
@@ -863,7 +1014,7 @@ DCAMERR orca_switch_mode(ORCACAM cam, DCAMPROPMODEVALUE mode)
     err = ORCACALL(dcamprop_setgetvalue, cam->hdcam, DCAM_IDPROP_SENSORMODE, &v,
                    0);
     DCAMPROPMODEVALUE new_mode = (DCAMPROPMODEVALUE)v;
-    if (dcamerr_failed(err))
+    if (orcaerr_failed(err))
     {
         return err;
     }
@@ -888,10 +1039,10 @@ static void *orcacam_capture_thread(void *inp)
         args->ret = DCAMERR_NORESOURCE;
         goto ret;
     }
-    HDCAM cam = args->cam;
-    HDCAMWAIT wait = args->wait;
-    void **frameptr = args->frameptr;
-    DCAMERR err          = DCAMERR_SUCCESS;
+    HDCAM cam        = args->cam;
+    HDCAMWAIT wait   = args->wait;
+    void **frameptr  = args->frameptr;
+    DCAMERR err      = DCAMERR_SUCCESS;
     ORCA_FRAME frame = {
         .data       = NULL,
         .width      = args->width,
@@ -907,7 +1058,7 @@ static void *orcacam_capture_thread(void *inp)
     // double v;
     // double wait_time = 0;
     // err = ORCACALL(dcamprop_getvalue, cam->hdcam,
-    // DCAM_IDPROP_INTERNAL_FRAMEINTERVAL, &v); if (dcamerr_failed(err))
+    // DCAM_IDPROP_INTERNAL_FRAMEINTERVAL, &v); if (orcaerr_failed(err))
     // {
     //     goto ret;
     // }
@@ -924,7 +1075,7 @@ static void *orcacam_capture_thread(void *inp)
     while (true)
     {
         err = ORCACALL(dcamwait_start, wait, &start);
-        if (dcamerr_failed(err))
+        if (orcaerr_failed(err))
         {
             if (err == DCAMERR_ABORT)
             {
@@ -943,7 +1094,7 @@ static void *orcacam_capture_thread(void *inp)
         }
         // get capture info
         err = ORCACALL(dcamcap_transferinfo, cam, &xferinfo);
-        if (dcamerr_failed(err))
+        if (orcaerr_failed(err))
         {
             continue;
         }

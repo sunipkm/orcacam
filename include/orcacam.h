@@ -64,6 +64,7 @@ typedef struct _ORCA_FRAME
     int32 height;       //!< Frame height
     DCAM_PIXELTYPE fmt; //!< Frame pixel format
     int32 row_stride;   //!< Frame row stride (bytes)
+    int32 rsvd;        //!< Reserved
 } ORCA_FRAME;
 
 /**
@@ -182,7 +183,34 @@ DCAMERR orca_get_mode(ORCACAM cam, DCAMPROPMODEVALUE *_Nonnull mode);
 DCAMERR orca_switch_mode(ORCACAM cam, DCAMPROPMODEVALUE mode);
 
 /**
- * @brief Start image acquisition
+ * @brief Start image acquisition (no callback API)
+ *
+ * @param cam ORCACAM handle
+ * @param frame Frame handle. Must be pre-allocated. orca_start_acquisition fills in the image frame information (width, height, image format).
+ * @return DCAMERR
+ */
+DCAMERR orca_start_acquisition(ORCACAM cam, ORCA_FRAME *_Nonnull frame);
+
+/**
+ * @brief Acquire an image frame
+ *
+ * @param cam ORCACAM handle
+ * @param frame Frame handle, passed through orca_start_acquisition. orca_acquire_image fills in the frame data.
+ * @param timeout Timeout in milliseconds
+ * @return DCAMERR
+ */
+DCAMERR orca_acquire_image(ORCACAM cam, ORCA_FRAME *_Nonnull frame, int32 timeout);
+
+/**
+ * @brief Stop image acquisition (no callback API)
+ *
+ * @param cam ORCACAM handle
+ * @return DCAMERR
+ */
+DCAMERR orca_stop_acquisition(ORCACAM cam);
+
+/**
+ * @brief Start image acquisition (callback API)
  *
  * @param cam ORCACAM handle
  * @param cb Frame callback function
