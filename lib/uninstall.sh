@@ -1,15 +1,34 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-# Settings
+######################################
+# SETTING                            #
+######################################
 MAINDIR=$(cd $(dirname $0) && pwd)
 UNINSTALL_DIR="/usr/local/hamamatsu_dcam/api"
+#DCAM_VER=$(cd $UNINSTALL_DIR/modules && ls libdcamdig.so.* | cut -d "." -f 5)
+#UNINSTALL_DIR_VER=$UNINSTALL_DIR.$DCAM_VER
 
+FLG_FORCE=0
+FLG_MAINCALL=0
+
+for arg in "$@"
+do
+	if [ $arg == "-f" -o $arg == "--force" ]; then
+		FLG_FORCE=1
+	elif [ $arg == "--maincall" ]; then
+		FLG_MAINCALL=1
+	fi
+done
+
+
+######################################
+# uninstall directory check          #
+######################################
 if [ ! -d $UNINSTALL_DIR ]; then
 	echo "Warnig : \"$UNINSTALL_DIR\" is not installed."	
 	exit 0
 fi
 
-FLG_FORCE=0
 if [ $FLG_FORCE == 0 ]; then
 	echo "Do you want to remove \"$UNINSTALL_DIR\"? (Y/n)"
 	read ans
@@ -17,6 +36,7 @@ if [ $FLG_FORCE == 0 ]; then
 		exit 0
 	fi
 fi
+
 
 ######################################
 # module uninstall                   #
@@ -30,6 +50,7 @@ fi
 if [ -e /usr/local/lib/libdcamapi.so ]; then
 	sudo rm -f /usr/local/lib/libdcamapi.so*
 fi
+
 
 ######################################
 # directory uninstall                #

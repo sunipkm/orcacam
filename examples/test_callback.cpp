@@ -5,6 +5,7 @@
 
 #undef NDEBUG
 #include "orcacam.h"
+#include "orcacam_strerr.h"
 
 // Callback data
 double framerate_measured = 0.0;
@@ -51,6 +52,7 @@ const char *sensormode_str(DCAMPROPMODEVALUE val)
 
 int main(int argc, char *argv[])
 {
+    double fps = 0.0;
     DCAMPROPMODEVALUE mode = DCAMPROP_SENSORMODE__AREA; // default
     if (argc > 1)
     {
@@ -125,12 +127,30 @@ int main(int argc, char *argv[])
 
     // TODO: Get the temperature set point
     // ERROR: Invalid property ID
-    // err = orca_get_tempsetpoint(cam, &temp);
-    // if (orcaerr_failed(err))
-    // {
-    //     goto close_cam;
-    // }
-    // printf("Camera temperature setpoint: %.1f C\n", temp);
+    err = orca_get_tempsetpoint(cam, &temp);
+    if (orcaerr_failed(err))
+    {
+        // goto close_cam;
+        printf("Failed to get camera temperature setpoint: %s\n", orcacam_sterr(err));
+    } else {
+        printf("Camera temperature setpoint: %.1f C\n", temp);
+    }
+    err = orca_set_tempsetpoint(cam, 20.0);
+    if (orcaerr_failed(err))
+    {
+        // goto close_cam;
+        printf("Failed to set camera temperature setpoint: %s\n", orcacam_sterr(err));
+    } else {
+        printf("Set camera temperature setpoint to 20.0 C\n");
+    }
+    err = orca_get_value(cam, DCAM_IDPROP_SENSORCOOLER, &temp);
+    if (orcaerr_failed(err))
+    {
+        // goto close_cam;
+        printf("Failed to get camera temperature status: %s\n", orcacam_sterr(err));
+    } else {
+        printf("Camera temperature status: %.1f C\n", temp);
+    }
 
     // Get exposure time
     double exposure;
@@ -141,7 +161,7 @@ int main(int argc, char *argv[])
     }
     printf("Camera exposure: %.6f s\n", exposure);
     // Set exposure time
-    exposure = 0.001;
+    exposure = 0.5;
     DCAMPROP_ATTR attr;
     err = orca_get_attr(cam, DCAM_IDPROP_EXPOSURETIME, &attr);
     if (orcaerr_failed(err))
@@ -183,7 +203,6 @@ int main(int argc, char *argv[])
     // }
 
     // Get acquisition frame rate
-    double fps;
     err = orca_get_acq_framerate(cam, &fps);
     if (orcaerr_failed(err))
     {
@@ -238,6 +257,7 @@ void orca_frame_callback(ORCA_FRAME *frame, void *user_data,
         printf("Capturing frames...\n");
         if (frame->fmt == DCAM_PIXELTYPE_MONO8)
         {
+            unsigned char maxval = 0;
             png::image<png::gray_pixel> img(frame->width, frame->height);
             for (int32 y = 0; y < frame->height; y++)
             {
@@ -245,12 +265,18 @@ void orca_frame_callback(ORCA_FRAME *frame, void *user_data,
                 {
                     img[y][x] =
                         ((unsigned char *)frame->data)[y * frame->width + x];
+                    if (maxval < img[y][x])
+                    {
+                        maxval = img[y][x];
+                    }
                 }
             }
             img.write("frame.png");
+            printf("Max pixel value: %u\n", maxval);
         }
         else if (frame->fmt == DCAM_PIXELTYPE_MONO16)
         {
+            unsigned short maxval = 0;
             png::image<png::gray_pixel_16> img(frame->width, frame->height);
             for (int32 y = 0; y < frame->height; y++)
             {
@@ -258,9 +284,14 @@ void orca_frame_callback(ORCA_FRAME *frame, void *user_data,
                 {
                     img[y][x] =
                         ((unsigned short *)frame->data)[y * frame->width + x];
+                    if (maxval < img[y][x])
+                    {
+                        maxval = img[y][x];
+                    }
                 }
             }
             img.write("frame.png");
+            printf("Max pixel value: %u\n", maxval);
         }
         else
         {
@@ -269,7 +300,7 @@ void orca_frame_callback(ORCA_FRAME *frame, void *user_data,
     }
     double dt = (now.tv_sec - last_time.tv_sec) +
                 (now.tv_nsec - last_time.tv_nsec) * 1e-9;
-    double fps;
+    double fps = 0.0;
     if (user_data && count > 0)
     {
         fps = *((double *)user_data);
